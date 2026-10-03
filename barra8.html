@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barra de Herramientas xat Integrada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: transparent; 
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        #xat-app-container {
+            width: 100%;
+            max-width: 1180px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            pointer-events: none;
+        }
+        #xat-app-container * {
+            pointer-events: auto;
+        }
+
+        .top-toolbar {
+            background-color: #1a2235;
+            border: 1px solid #2a3553;
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            background-color: #0b1021;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid #2a3553;
+        }
+
+        .toolbar-btn {
+            background: transparent;
+            color: #8b9bb4;
+            border: none;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-btn:hover { color: #ffffff; background-color: rgba(255, 255, 255, 0.05); }
+        .toolbar-btn.active { background-color: #1db954; color: white; border-radius: 20px; }
+
+        .toolbar-center-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background-color: #0b1021;
+            padding: 6px 15px;
+            border-radius: 20px;
+            border: 1px solid #2a3553;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .mini-thumb { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; border: 1px solid #2a3553; }
+        .mini-info { display: flex; flex-direction: column; width: 120px; }
+        .mini-title { font-size: 12px; font-weight: bold; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mini-artist { font-size: 10px; color: #8b9bb4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .bar-control-btn {
+            background: none;
+            border: none;
+            color: #8b9bb4;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .bar-control-btn:hover { color: white; transform: scale(1.1); }
+        .bar-play-btn { color: #1db954; font-size: 24px; }
+        .bar-play-btn:hover { color: #1ed760; }
+        .bar-autoplay-btn.active { color: #1db954; }
+
+        .volume-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #0b1021;
+            border: 1px solid #2a3553;
+            border-radius: 20px;
+            padding: 6px 15px;
+        }
+
+        #volume-icon {
+            width: 20px; 
+            text-align: center;
+        }
+
+        .volume-slider {
+            width: 80px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #2a3553;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #1db954;
+            cursor: pointer;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        /* PANEL IZQUIERDO */
+        .left-panel {
+            width: 215px;
+            background-color: #1a2235;
+            border: 1px solid #2a3553;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .player-img {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-bottom: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            border: 2px solid #0b1021;
+            transition: box-shadow 0.3s;
+        }
+
+        .player-info { text-align: center; margin-bottom: 15px; width: 100%; }
+        .player-title { color: #ffffff; font-size: 16px; font-weight: bold; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-artist { color: #8b9bb4; font-size: 12px; }
+        
+        .player-time-left { font-size: 11px; color: #1db954; font-family: monospace; font-weight: bold; }
+
+        /* ESPACIO CENTRAL (Chat xat) */
+        .chat-space-spacer {
+            width: 726px;
+            height: 486px;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+
+        /* PANEL DERECHO */
+        .right-panel {
+            width: 215px;
+            background-color: #1a2235;
+            border: 1px solid #2a3553;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            flex-shrink: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+            max-height: 486px;
+        }
+
+        .playlist-header {
+            padding: 15px;
+            border-bottom: 1px solid #2a3553;
+            display: flex;
+            align-items: center;
+            background-color: #0b1021;
+            overflow: hidden;
+        }
+
+        /* Marquesina para el texto en movimiento */
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .marquee-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 8s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
+        .song-list-container { flex-grow: 1; overflow-y: auto; }
+        .song-list-container::-webkit-scrollbar { width: 4px; }
+        .song-list-container::-webkit-scrollbar-track { background: #1a2235; }
+        .song-list-container::-webkit-scrollbar-thumb { background: #2a3553; border-radius: 10px; }
+
+        .song-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(42, 53, 83, 0.3);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .song-item:hover { background-color: #2a3553; }
+        .song-item:hover .song-number { display: none; }
+        .song-item:hover .play-icon-hover { display: block; }
+        
+        .song-number-container { width: 20px; text-align: center; display: flex; justify-content: center; align-items: center; }
+        .play-icon-hover { display: none; color: #ffffff; }
+
+        .active-song-text { color: #1db954 !important; }
+
+        @keyframes pulse-shadow {
+            0% { box-shadow: 0 0 10px rgba(29, 185, 84, 0.2); }
+            50% { box-shadow: 0 0 25px rgba(29, 185, 84, 0.6); }
+            100% { box-shadow: 0 0 10px rgba(29, 185, 84, 0.2); }
+        }
+        .playing-shadow {
+            animation: pulse-shadow 2s infinite;
+            border-color: #1db954;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="xat-app-container">
+        
+        <!-- BARRA SUPERIOR -->
+        <div class="top-toolbar">
+            <div class="toolbar-left">
+                <!-- Género Banda (Único activo por ahora tras limpiar audios de prueba) -->
+                <button class="toolbar-btn active" id="btn-banda" onclick="loadGenre('banda')">
+                    <i class="fas fa-hat-cowboy"></i> <span class="hidden sm:inline">Banda</span>
+                </button>
+            </div>
+
+            <!-- Reproductor miniatura anclado al centro -->
+            <div class="toolbar-center-controls">
+                <img src="" id="mini-thumb" class="mini-thumb" alt="Miniatura">
+                <div class="mini-info">
+                    <div id="mini-title" class="mini-title">Cargando...</div>
+                    <div id="mini-artist" class="mini-artist">Artista</div>
+                </div>
+                <div class="flex items-center gap-3 pl-2">
+                    <button class="bar-control-btn" title="Anterior canción" onclick="playPrevious()">
+                        <i class="fas fa-step-backward"></i>
+                    </button>
+                    <button class="bar-control-btn bar-play-btn" title="Reproducir/Pausar" onclick="togglePlay()">
+                        <i class="fas fa-play-circle" id="bar-play-icon"></i>
+                    </button>
+                    <button class="bar-control-btn" title="Siguiente canción" onclick="playNext()">
+                        <i class="fas fa-step-forward"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Volumen + Autoplay a la derecha -->
+            <div class="volume-container">
+                <button class="bar-control-btn bar-autoplay-btn" id="btn-autoplay" title="Activar Modo Aleatorio" onclick="toggleAutoplay()">
+                    <i class="fas fa-random"></i>
+                </button>
+                <div class="w-[1px] h-4 bg-[#2a3553] mx-1"></div>
+                <button class="bar-control-btn" onclick="toggleMute()" title="Silenciar/Activar">
+                    <i class="fas fa-volume-up" id="volume-icon"></i>
+                </button>
+                <input type="range" id="volume-slider" class="volume-slider" min="0" max="1" step="0.05" value="0.7" oninput="changeVolume(this.value)">
+            </div>
+        </div>
+
+        <div class="main-layout">
+            
+            <!-- PANEL IZQUIERDO -->
+            <div class="left-panel">
+                <img src="" id="player-img" class="player-img" alt="Portada">
+                
+                <div class="player-info">
+                    <div id="player-title" class="player-title">Selecciona una pista</div>
+                    <div id="player-artist" class="player-artist">Playlist disponible</div>
+                </div>
+            
+                <div id="player-time-left" class="player-time-left">00:00 / 00:00</div>
+            </div>
+
+            <!-- ESPACIO CENTRAL -->
+            <div class="chat-space-spacer"></div>
+
+            <!-- PANEL DERECHO -->
+            <div class="right-panel">
+                <div class="playlist-header">
+                    <div class="w-full flex flex-col justify-center">
+                        <div class="marquee-container">
+                            <div id="playlist-header-title" class="text-white font-bold text-[12px] marquee-text">Selecciona una pista</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="song-list" class="song-list-container">
+                    <!-- Las canciones se inyectarán aquí -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Datos limpios y 100% enfocados en archivos MP3 reales
+        const musicData = {
+            banda: {
+                name: "Banda",
+                image: "https://xatimg.com/image/wH0XGp8SFCmm.jpg", 
+                songs: [
+                    { title: "El Beneficio De La Duda", artist: "Grupo Firme", time: "3:40", url: "https://www.dropbox.com/scl/fi/kr2y1tgq2rplh2m2pmvcw/Grupo-Firme-El-Beneficio-De-La-Duda.mp3?rlkey=ubdmv0qb2nxfybw208jfkwbd7&raw=1" },
+                    { title: "Regalo de Dios", artist: "Julión Álvarez y su Norteño Banda", time: "2:54", url: "https://www.dropbox.com/scl/fi/ec8imlegs5dgoxs6xzhhl/Juli-n-lvarez-y-su-Norte-o-Banda-Regalo-de-Dios.mp3?rlkey=kbjxj3o3sfj5ndqzlc48yoymv&raw=1" },
+                    { title: "Mar Azul", artist: "Natanael Cano", time: "3:25", url: "https://www.dropbox.com/scl/fi/drc30zlq0b8s3wdmf8mpt/Natanael-Cano-Mar-Azul.mp3?rlkey=xxvgb0ch849ha9x3usfz916be&raw=1" }
+                ]
+            }
+        };
+
+        let currentGenre = 'banda';
+        let currentSongIndex = 0;
+        let isPlaying = false;
+        let isAutoplay = false; 
+        let playedSongs = new Set();
+        
+        let htmlAudio = new Audio(); 
+        htmlAudio.volume = 0.7;
+        let previousVolume = 0.7;
+        
+        // Variable para controlar qué canción está cargada en memoria y evitar reiniciar
+        let currentlyLoadedSong = null; 
+
+        window.onload = () => {
+            loadGenre('banda');
+        };
+        
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds === Infinity) return "0:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function updateTimeDisplays(currentStr, totalStr) {
+            const timeText = `${currentStr} / ${totalStr}`;
+            document.getElementById('player-time-left').textContent = timeText;
+        }
+
+        // Actualización de progreso en tiempo real
+        htmlAudio.addEventListener('timeupdate', () => {
+            if (htmlAudio.duration) {
+                updateTimeDisplays(formatTime(htmlAudio.currentTime), formatTime(htmlAudio.duration));
+            }
+        });
+
+        // Cuando la canción termina naturalmente
+        htmlAudio.addEventListener('ended', handleSongEnded);
+
+        function handleSongEnded() {
+            if (isAutoplay) {
+                playRandomNext();
+            } else {
+                playNextLooping(); 
+            }
+            startPlayingSelected();
+        }
+
+        function toggleAutoplay() {
+            isAutoplay = !isAutoplay;
+            const btn = document.getElementById('btn-autoplay');
+            if (isAutoplay) {
+                btn.classList.add('active');
+                playedSongs.clear(); 
+                playedSongs.add(currentSongIndex);
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function playRandomNext() {
+            const data = musicData[currentGenre];
+            if (playedSongs.size >= data.songs.length) {
+                playedSongs.clear();
+            }
+            
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * data.songs.length);
+            } while (playedSongs.has(randomIndex) && data.songs.length > 1);
+            
+            playedSongs.add(randomIndex);
+            
+            selectSong(randomIndex);
+            updatePlayUI();
+        }
+
+        function playNextLooping() {
+            const data = musicData[currentGenre];
+            let nextIndex = currentSongIndex + 1;
+            if (nextIndex >= data.songs.length) nextIndex = 0; 
+            
+            selectSong(nextIndex);
+            updatePlayUI();
+        }
+
+        function loadGenre(genreId) {
+            if (isPlaying) {
+                htmlAudio.pause();
+                isPlaying = false;
+            }
+            currentGenre = genreId;
+            playedSongs.clear(); 
+            
+            // Si agregas más géneros en el futuro, este selector los activa
+            document.querySelectorAll('.toolbar-left .toolbar-btn').forEach(btn => btn.classList.remove('active'));
+            const btn = document.getElementById(`btn-${genreId}`);
+            if (btn) btn.classList.add('active');
+
+            selectSong(0); 
+            updatePlayUI();
+        }
+
+        function selectSong(index) {
+            currentSongIndex = index;
+            const data = musicData[currentGenre];
+            const song = data.songs[index];
+            
+            // Panel Izquierdo
+            document.getElementById('player-title').textContent = song.title;
+            document.getElementById('player-artist').textContent = song.artist;
+            document.getElementById('player-img').src = data.image;
+
+            // Barra Superior Mini
+            document.getElementById('mini-title').textContent = song.title;
+            document.getElementById('mini-artist').textContent = song.artist;
+            document.getElementById('mini-thumb').src = data.image;
+
+            // Marquesina Panel Derecho
+            document.getElementById('playlist-header-title').textContent = `${song.title} - ${song.artist}`;
+            
+            // Reiniciar contador visual al seleccionar
+            updateTimeDisplays("0:00", song.time);
+
+            renderSongList();
+        }
+
+        function renderSongList() {
+            const data = musicData[currentGenre];
+            const songListContainer = document.getElementById('song-list');
+            songListContainer.innerHTML = ''; 
+
+            data.songs.forEach((song, index) => {
+                const isSelected = (index === currentSongIndex);
+                const titleColor = isSelected ? 'active-song-text' : 'text-white';
+                
+                const songHtml = `
+                    <div class="song-item group" onclick="selectAndPlaySong(${index})">
+                        <div class="flex items-center gap-3">
+                            <div class="song-number-container">
+                                <span class="${isSelected ? 'hidden' : 'inline'} text-[#8b9bb4] text-[10px] song-number">${index + 1}</span>
+                                <i class="fas ${isSelected && isPlaying ? 'fa-pause' : 'fa-play'} text-[#1db954] text-[9px] ${isSelected ? 'inline' : 'play-icon-hover'}"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="${titleColor} text-[11px] font-medium transition-colors">${song.title}</span>
+                                <span class="text-[#8b9bb4] text-[9px] transition-colors">${song.artist}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                songListContainer.innerHTML += songHtml;
+            });
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                htmlAudio.pause();
+                isPlaying = false;
+            } else {
+                startPlayingSelected();
+            }
+            updatePlayUI();
+        }
+        
+        function startPlayingSelected() {
+            const data = musicData[currentGenre];
+            const song = data.songs[currentSongIndex];
+            playedSongs.add(currentSongIndex); 
+
+            const isNewSong = (currentlyLoadedSong !== song);
+
+            if (isNewSong) {
+                htmlAudio.pause();
+                if (song.url) {
+                    htmlAudio.src = song.url;
+                    htmlAudio.currentTime = 0;
+                }
+                currentlyLoadedSong = song;
+            }
+
+            if (song.url) {
+                // Previene errores en la consola si el navegador bloquea el auto-play
+                htmlAudio.play().catch(e => console.log("Bloqueo de Audio:", e));
+            }
+            isPlaying = true;
+        }
+
+        function selectAndPlaySong(index) {
+            // Si le damos clic a la canción que ya está sonando, pausamos/reanudamos
+            if (index === currentSongIndex && isPlaying) {
+                togglePlay();
+                return;
+            }
+            selectSong(index);
+            startPlayingSelected();
+            updatePlayUI();
+        }
+
+        function playNext() {
+            const wasPlaying = isPlaying;
+            if (isPlaying) { 
+                htmlAudio.pause(); 
+                isPlaying = false; 
+            }
+            
+            playNextLooping();
+            
+            // Si venía reproduciéndose algo, iniciar la nueva en automático
+            if (wasPlaying) {
+                startPlayingSelected();
+            }
+            updatePlayUI();
+        }
+
+        function playPrevious() {
+            const wasPlaying = isPlaying;
+            if (isPlaying) { 
+                htmlAudio.pause(); 
+                isPlaying = false; 
+            }
+            
+            const data = musicData[currentGenre];
+            let prevIndex = currentSongIndex - 1;
+            if (prevIndex < 0) prevIndex = data.songs.length - 1; 
+            
+            selectSong(prevIndex); 
+            
+            if (wasPlaying) {
+                startPlayingSelected();
+            }
+            updatePlayUI(); 
+        }
+
+        function updatePlayUI() {
+            const iconClass = isPlaying ? 'fa-pause-circle' : 'fa-play-circle';
+            document.getElementById('bar-play-icon').className = `fas ${iconClass}`;
+            
+            const playerImg = document.getElementById('player-img');
+            
+            if(isPlaying) {
+                // Brillo ÚNICAMENTE en la imagen grande del lado izquierdo
+                playerImg.classList.add('playing-shadow');
+            } else {
+                playerImg.classList.remove('playing-shadow');
+            }
+
+            renderSongList();
+        }
+
+        function changeVolume(val) {
+            const volumeVal = parseFloat(val);
+            htmlAudio.volume = volumeVal;
+            
+            const icon = document.getElementById('volume-icon');
+            if (volumeVal === 0) {
+                icon.className = "fas fa-volume-mute text-[#8b9bb4]";
+            } else if (volumeVal < 0.4) {
+                icon.className = "fas fa-volume-down text-[#8b9bb4]";
+            } else {
+                icon.className = "fas fa-volume-up text-[#8b9bb4]";
+            }
+        }
+
+        function toggleMute() {
+            const slider = document.getElementById('volume-slider');
+            if (parseFloat(slider.value) > 0) {
+                previousVolume = slider.value;
+                slider.value = 0;
+                changeVolume(0);
+            } else {
+                slider.value = previousVolume;
+                changeVolume(previousVolume);
+            }
+        }
+    </script>
+</body>
+</html>
